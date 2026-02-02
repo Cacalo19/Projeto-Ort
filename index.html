@@ -100,10 +100,15 @@
         function gerarLink() {
             const num = document.getElementById('idPaciente').value.replace(/\D/g, '');
             if (!num) return alert("Digite o número!");
-            const link = `${siteBase}?p=${num}`;
-            document.getElementById('linkTexto').innerText = link;
+
+            //const link = `${siteBase}?p=${num}`;
+            // AQUI ESTÁ O SEGREDO: Use o seu link encurtado do Bitly
+            const linkCurto = `https://bit.ly/Indicacao-Especial-Orthodontic?p=${num}`;
+
+            document.getElementById('linkTexto').innerText = linkCurto;
             document.getElementById('resultadoContainer').style.display = 'block';
-            navigator.clipboard.writeText(link);
+            
+            navigator.clipboard.writeText(linkCurto);
             alert("Link copiado!");
         }
 
