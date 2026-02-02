@@ -1,17 +1,132 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Redirecionando - Orthodontic</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orthodontic - Indicações</title>
 
-  <meta property="og:title" content="Orthodontic">
-  <meta property="og:description" content="Oi! 😃 quero te indicar para a Orthodontic! Aqui é assim: indicou, ganhou!🎉 Agende agora sua avaliação gratuita 😁">
-  <meta property="og:image" content="https://cacalo19.github.io/Projeto-Ort/imag/fachada.jpg">
-  <meta property="og:url" content="https://cacalo19.github.io/Projeto-Ort/">
+    <meta property="og:title" content="Orthodontic">
+    <meta property="og:description" content="Oi! 😃 quero te indicar para a Orthodontic! Aqui é assim: indicou, ganhou!🎉 Agende agora sua avaliação gratuita 😁">
+    <meta property="og:image" content="https://cacalo19.github.io/Projeto-Ort/imag/fachada.jpg">
+    <meta property="og:url" content="https://cacalo19.github.io/Projeto-Ort/">
 
-  <meta http-equiv="refresh" content="0; url=https://wa.me/555391751337?text=Quero%20minha%20avaliação%20na%20Orthodontic!%20🦷✨%20%0AVim%20pelo%20ID:555391655966">
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+        
+        /* Estilo do Painel (Visão da Clínica) */
+        #painel-gestao { display: none; width: 100%; max-width: 600px; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; margin: 20px; }
+        input { width: 80%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 20px; text-align: center; font-size: 16px; }
+        .btn-gerar { background-color: #00a859; color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 85%; }
+        #resultadoContainer { display: none; margin-top: 20px; padding: 15px; border: 2px dashed #00a859; border-radius: 10px; background-color: #f6fff9; cursor: pointer; }
+        
+        /* Estilo do Redirecionamento (Visão do Amigo) */
+        #redirecionamento { display: none; text-align: center; }
+        .loader { border: 5px solid #f3f3f3; border-top: 5px solid #00a859; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Tabela de Dados */
+        .dashboard { width: 90%; max-width: 900px; background: white; padding: 20px; border-radius: 12px; margin-top: 20px; display: none; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
+        .status-confirmado { color: #00a859; font-weight: bold; }
+    </style>
 </head>
 <body>
-    <p>Caso não seja redirecionado, <a href="https://wa.me/555391751337">clique aqui</a>.</p>
+
+    <div id="redirecionamento">
+        <div class="loader"></div>
+        <h2>Redirecionando para a Orthodontic...</h2>
+        <p>Aguarde um momento enquanto validamos sua indicação.</p>
+    </div>
+
+    <div id="painel-gestao">
+        <h2 style="color: #00a859;">Painel de Gestão</h2>
+        <p>Digite o WhatsApp do Paciente para gerar o link:</p>
+        <input type="text" id="idPaciente" placeholder="+55 53 9919-7000">
+        <button class="btn-gerar" onclick="gerarLink()">Gerar Link de Indicação</button>
+
+        <div id="resultadoContainer" onclick="copiarLink()">
+            <span id="linkTexto" style="color: #00a859; font-weight: bold;"></span>
+        </div>
+    </div>
+
+    <div id="dashboard-container" class="dashboard">
+        <h3>Acompanhamento de Indicações</h3>
+        <table id="tabelaAgendamentos">
+            <thead>
+                <tr>
+                    <th>Quem Indicou</th>
+                    <th>Amigo (Lead)</th>
+                    <th>Status</th>
+                    <th>Ação</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        const scriptURL = "https://script.google.com/macros/s/AKfycbxIFoIRal_fN3FGe4lO2i0CUzBpU8hxftR37h0ZZUVPF1JwSVEt9RKn1ABunzVrenYjJQ/exec";
+        const siteBase = "https://cacalo19.github.io/Projeto-Ort/";
+
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const p = urlParams.get('p');
+
+            if (p) {
+                // Se o link tem ?p=, é um amigo clicando
+                document.getElementById('redirecionamento').style.display = 'block';
+                registrarERedirecionar(p);
+            } else {
+                // Se não tem parâmetro, é sua esposa abrindo o painel
+                document.getElementById('painel-gestao').style.display = 'block';
+                document.getElementById('dashboard-container').style.display = 'block';
+                carregarDados();
+            }
+        };
+
+        async function registrarERedirecionar(id) {
+            try {
+                // Registra o clique na planilha
+                await fetch(`${scriptURL}?p=${id}`, { mode: 'no-cors' });
+            } finally {
+                // Redireciona para o WhatsApp após 1.5 segundos
+                setTimeout(() => {
+                    window.location.href = `https://wa.me/555391751337?text=Quero%20minha%20avaliação%20na%20Orthodontic!%20🦷%0AVim%20pela%20indicação%20do%20ID:${id}`;
+                }, 1500);
+            }
+        }
+
+        function gerarLink() {
+            const num = document.getElementById('idPaciente').value.replace(/\D/g, '');
+            if (!num) return alert("Digite o número!");
+            const link = `${siteBase}?p=${num}`;
+            document.getElementById('linkTexto').innerText = link;
+            document.getElementById('resultadoContainer').style.display = 'block';
+            navigator.clipboard.writeText(link);
+            alert("Link copiado!");
+        }
+
+        async function carregarDados() {
+            const tbody = document.querySelector("#tabelaAgendamentos tbody");
+            try {
+                const res = await fetch(`${scriptURL}?acao=listar`);
+                const dados = await res.json();
+                tbody.innerHTML = dados.map(l => `
+                    <tr>
+                        <td>${l[0]}</td>
+                        <td>${l[1]}</td>
+                        <td class="${l[2] === 'Confirmado' ? 'status-confirmado' : ''}">${l[2]}</td>
+                        <td>${l[2] === 'Confirmado' ? '✅' : `<button onclick="confirmar('${l[1]}')">Confirmar</button>`}</td>
+                    </tr>
+                `).join('');
+            } catch (e) { tbody.innerHTML = "Erro ao carregar dados."; }
+        }
+
+        async function confirmar(amigo) {
+            await fetch(`${scriptURL}?acao=confirmar&amigo=${amigo}`);
+            carregarDados();
+        }
+    </script>
 </body>
 </html>
