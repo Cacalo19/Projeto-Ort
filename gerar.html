@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Orthodontic | Gestão de Indicações</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; margin: 20px; display: flex; flex-direction: column; align-items: center; }
+        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; max-width: 500px; text-align: center; margin-bottom: 20px; }
+        h2 { color: #333; margin-bottom: 5px; }
+        p { color: #666; font-size: 14px; margin-bottom: 20px; }
+        input { width: 90%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; margin-bottom: 20px; text-align: center; }
+        .btn-gerar { background-color: #00a859; color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; transition: 0.3s; }
+        .btn-gerar:hover { background-color: #008f4c; }
+        
+        /* O campo de link que você gostou */
+        #resultadoContainer { display: none; margin-top: 25px; padding: 15px; border: 2px dashed #00a859; border-radius: 10px; background-color: #f6fff9; cursor: pointer; position: relative; }
+        #linkTexto { color: #00a859; font-weight: bold; word-break: break-all; font-size: 14px; }
+
+        /* Tabela de Gestão em baixo */
+        .dashboard { width: 100%; max-width: 900px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+        th { color: #00a859; text-transform: uppercase; font-size: 11px; }
+        .status-pendente { color: #d9534f; font-weight: bold; }
+        .status-confirmado { color: #00a859; font-weight: bold; }
+        .btn-confirmar { background: #2196F3; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>Gerar Link de Indicação</h2>
+        <p>Cole o número do paciente abaixo:</p>
+        <input type="text" id="idPaciente" placeholder="">
+        <button class="btn-gerar" onclick="gerarLink()">Gerar e Copiar Link</button>
+
+        <div id="resultadoContainer" onclick="copiarLinkNovamente()">
+            <span id="linkTexto"></span>
+        </div>
+    </div>
+
+    <div class="dashboard">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="color: #333;">Acompanhamento em Tempo Real</h3>
+            <button onclick="carregarDados()" style="font-size: 12px; cursor: pointer;">🔄 Atualizar</button>
+        </div>
+        <table id="tabelaAgendamentos">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Quem Indicou</th>
+                    <th>Amigo (Lead)</th>
+                    <th>Status</th>
+                    <th>Ação</th>
+                </tr>
+            </thead>
+            <tbody>
+                </tbody>
+        </table>
+    </div>
+
+    <script>
+        const scriptURL = "https://script.google.com/macros/s/AKfycbxIFoIRal_fN3FGe4lO2i0CUzBpU8hxftR37h0ZZUVPF1JwSVEt9RKn1ABunzVrenYjJQ/exec"; // A que termina em /exec
+        const siteBase = "https://cacalo19.github.io/Projeto-Ort/";
+
+        function gerarLink() {
+            const p = document.getElementById('idPaciente').value.replace(/\D/g, '');
+            if (!p) { alert("Digite o número do paciente!"); return; }
+
+            const linkCurto = `https://bit.ly/Indicacao-Especial-Orthodontic?p=${p}`;
+            
+            // Exibe o campo verde de destaque
+            document.getElementById('linkTexto').innerText = linkCurto;
+            document.getElementById('resultadoContainer').style.display = 'block';
+
+            // Copia automaticamente
+            navigator.clipboard.writeText(linkCurto);
+            alert("Link gerado e copiado!");
+        }
+
+        function copiarLinkNovamente() {
+            const texto = document.getElementById('linkTexto').innerText;
+            navigator.clipboard.writeText(texto);
+            alert("Link copiado novamente!");
+        }
+
+        async function carregarDados() {
+            const tbody = document.querySelector("#tabelaAgendamentos tbody");
+            tbody.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
+
+            try {
+                const response = await fetch(`${scriptURL}?acao=listar`);
+                const dados = await response.json();
+                tbody.innerHTML = "";
+                
+                dados.forEach(linha => {
+                    const dataF = new Date().toLocaleDateString('pt-BR'); // Simulação de data
+                    const isConf = linha[2] === "Confirmado"; // Coluna C: Status
+                    
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${dataF}</td>
+                            <td>${linha[0]}</td> <td>${linha[1]}</td> <td class="${isConf ? 'status-confirmado' : 'status-pendente'}">${linha[2]}</td>
+                            <td>${isConf ? "✅" : `<button class="btn-confirmar" onclick="confirmarAgendamento('${linha[1]}')">Confirmar</button>`}</td>
+                        </tr>`;
+                });
+            } catch (e) { tbody.innerHTML = "<tr><td colspan='5'>Erro ao carregar dados da planilha.</td></tr>"; }
+        }
+
+        async function confirmarAgendamento(numAmigo) {
+            if (!confirm("Confirmar este agendamento?")) return;
+            try {
+                await fetch(`${scriptURL}?acao=confirmar&amigo=${numAmigo}`);
+                carregarDados();
+            } catch (e) { alert("Erro ao conectar com a planilha."); }
+        }
+
+        window.onload = carregarDados;
+    </script>
+</body>
+</html>
